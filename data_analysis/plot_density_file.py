@@ -8,18 +8,18 @@ import matplotlib.pyplot as plt
 from cartopy import crs as ccrs
 import matplotlib.patches as patch
 
-dataDIR = './density_data/*count*'
+dataDIR = '/gws/nopw/j04/impala/users/dwatsonparris/POC_analysis/density_data/*count*'
 filelist = glob(dataDIR)
 counts=[]
 for file in filelist:
-    counts.append(cis.read_data(file, 'poc_mask_num_points'))
+    counts.append(cis.read_data(file, 'poc_mask_num_points', 'NetCDF_Gridded'))
 total_counts = make_from_cube(sum(counts))
     
-dataDIR = './density_data/*sum*'
+dataDIR = '/gws/nopw/j04/impala/users/dwatsonparris/POC_analysis/density_data/*sum*'
 filelist = glob(dataDIR)
 sums=[]
 for file in filelist:
-    sums.append(cis.read_data(file, 'poc_mask'))
+    sums.append(cis.read_data(file, 'poc_mask', 'NetCDF_Gridded'))
 total_sum = make_from_cube(sum(sums))
 
 lon = {'cal':[230,240], 'per':[270,280], 'nam':[360,10]}
@@ -36,7 +36,7 @@ for place, coords in lat.items():
     else:
         rect = patch.Rectangle((lon[place][0],lat[place][0]), lon[place][1]-lon[place][0], lat[place][1]-lat[place][0], transform=ccrs.PlateCarree(), linewidth=1, edgecolor='r', facecolor='none')
         ax.add_patch(rect)
-plt.show()
+plt.savefig('density1.png')
 
 fig=plt.figure(figsize=(15,15))#, dpi=300)
 ax = plt.axes(projection=ccrs.PlateCarree())
@@ -49,12 +49,12 @@ for place, coords in lat.items():
     else:
         rect = patch.Rectangle((lon[place][0],lat[place][0]), lon[place][1]-lon[place][0], lat[place][1]-lat[place][0], transform=ccrs.PlateCarree(), linewidth=1, edgecolor='r', facecolor='none')
         ax.add_patch(rect)
-plt.show()
+plt.savefig('density2.png')
 
 fig=plt.figure(figsize=(15,15))#, dpi=300)
 ax = plt.axes(projection=ccrs.PlateCarree())
 ax.coastlines()
 make_from_cube(total_sum/total_counts).plot(ax=ax)
-plt.show()
+plt.savefig('density3.png')
 
 good_colours = ['cool', 'Greens', 'Reds', 'Blues', 'YlGnBu', 'YlOrRd']

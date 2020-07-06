@@ -14,7 +14,8 @@ import os
 fileload = 1
 num_procs = 8
 #dataDIR = 'Archive/*hdf_poc_5km.nc'
-dataDIR = '/gws/nopw/j04/eo_shared_data_vol2/scratch/modis_hdf_processed/*hdf_poc_5km.nc'
+#dataDIR = '/gws/nopw/j04/eo_shared_data_vol2/scratch/dwatsonparris/AMSR2_*rain.nc'
+dataDIR = '/gws/nopw/j04/eo_shared_data_vol2/scratch/dwatsonparris/AMSRE_*_????_rain.nc'
 filelist = glob(dataDIR)
 print(len(filelist))
 print(filelist)
@@ -68,37 +69,79 @@ def data_extract(file):
     try:
         DS = xr.open_mfdataset(file)
     except:
-        print("That one didn't work!")
+        print("That one didn't work! " + str(file))
+        return None
+
+    if not hasattr(DS, 'poc_mask'):
+        print("file doesn't contain a mask: " + str(file))
         return None
         
     #if DS['poc_mask'].values.any() == 0:
     #    return None
     data = {}
     #data comes in as one long vector, reshape to modis image size, first dimension is image index
-    #shape = (int(DS.poc_mask.shape[0]/(406*270)),406,270)
+    #    rain_time = 263 ;
+    #    rain_swath_width = 486 ;
+    #    lwp_time = 263 ;
+    #    lwp_swath_width = 243 ;
+
+    #   rain_time = 264 ;
+    #   rain_swath_width = 486 ;
+    #   yr_day_utc = 3 ;
+    #   lwp_time = 263 ;
+    #   lwp_swath_width = 243 ;
+
     #print(DS.poc_mask.shape[0], shape)
-    if DS.poc_mask.shape[0] % (406*270) == 0:
-        shape = (int(DS.poc_mask.shape[0]/(406*270)),406,270)
-    elif DS.poc_mask.shape[0] % (408*270) == 0:
-        shape = (int(DS.poc_mask.shape[0]/(408*270)),408,270)
-    else:
-        print("Weird shape modis data: {}".format(DS.poc_mask.shape[0]))
-        print(file)
-        print(DS)
-        return None
+    # AMSRE rain
+    #if DS.poc_mask.shape[0] % (265*486)== 0:
+    #    shape = (int(DS.poc_mask.shape[0]/(265*486)),486,265)
+    #elif DS.poc_mask.shape[0] % (264*486) == 0:
+    #    shape = (int(DS.poc_mask.shape[0]/(264*486)),486,264)
+    #elif DS.poc_mask.shape[0] % (263*486) == 0:
+    #    shape = (int(DS.poc_mask.shape[0]/(263*486)),486,263)
+    # AMSRE LWP
+    #elif DS.poc_mask.shape[0] % (265*243) == 0:
+    #    shape = (int(DS.poc_mask.shape[0]/(265*243)),243,265)
+    # AMSR2
+#        rain_time = 528 ;
+#        rain_swath_width = 486 ;
+#        lwp_time = 264 ;
+#        lwp_swath_width = 243 ;
+    #elif DS.poc_mask.shape[0] % (529*486) == 0:
+    #    shape = (int(DS.poc_mask.shape[0]/(529*486)),529,486)
+    #elif DS.poc_mask.shape[0] % (528*486) == 0:
+    #    shape = (int(DS.poc_mask.shape[0]/(528*486)),528,486)
+    #elif DS.poc_mask.shape[0] % (527*486) == 0:
+    #    shape = (int(DS.poc_mask.shape[0]/(527*486)),527,486)
+    #elif DS.poc_mask.shape[0] % (264*243) == 0:
+    #    shape = (int(DS.poc_mask.shape[0]/(264*243)),264,243)
+    #elif DS.poc_mask.shape[0] % (263*243) == 0:
+    #    shape = (int(DS.poc_mask.shape[0]/(263*243)),263,243)
+    #elif DS.poc_mask.shape[0] % (265*243) == 0:
+    #    shape = (int(DS.poc_mask.shape[0]/(265*243)),265,243)
+    ## TODO add 63909 shape...
+#    elif DS.poc_mask.shape[0] % (265*243) == 0:
+#        shape = (int(DS.poc_mask.shape[0]/(265*243)),265,243)
+    #else:
+    #    print("Weird shape modis data: {}".format(DS.poc_mask.shape[0]))
+    #    print(file)
+    #    print(DS)
+    #    return None
+
+    #print(shape)
 
     #extract numpy arrays into dict
     for variable in DS:
         if variable == 'time':
             continue
-        try: 
-            data[variable] = DS[variable].values.reshape(shape)
-        except:
-            print('Something went wrong in the reshaping!')
-            return None
+        #try: 
+        data[variable] = DS[variable].values #.reshape(shape)
+        #except:
+        #   print('Something went wrong in the reshaping!')
+        #   return None
 
     #Discard images with no pocs
-    poc_index = data['poc_mask'].any(axis=(1,2))
+    poc_index = data['poc_mask'].any()
     poc_only_data = {}
     for variable, array in data.items():
         poc_only_data[variable] = array[poc_index,...]
@@ -134,7 +177,7 @@ if __name__ == '__main__':
     pool = Pool(num_procs)
     inputs = [file for file in datagen(fileload,filelist)]
     output = pool.map(data_extract, inputs)
-    print(output)
+    #print(output)
     pool.close()
     pool.join()
 
@@ -142,5 +185,5 @@ if __name__ == '__main__':
         os.makedirs('results')
     
     print('Saving...')
-    with open('results/results_5km.pickle', 'wb') as handle:
+    with open('results/results_amsre_rain.pickle', 'wb') as handle:
         pickle.dump(output, handle, protocol=pickle.HIGHEST_PROTOCOL)

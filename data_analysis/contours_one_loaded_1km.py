@@ -11,9 +11,16 @@ from glob import glob
 import itertools
 import os
 
-fileload = 10
-num_procs = 12
-dataDIR = 'Archive/*hdf_poc_1km.nc'
+fileload = 1
+num_procs = 16
+
+# Original Terra data
+dataDIR = '/gws/nopw/j04/eo_shared_data_vol2/scratch/modis_hdf_processed/*hdf_poc_1km.nc'
+# Aqua data (e.g. MYD06_L2.A2018043.2200_poc.nc)
+#dataDIR = '/gws/nopw/j04/eo_shared_data_vol2/scratch/dwatsonparris/MYD06_L2.*_poc.nc'
+# Cloudsat data (e.g. MYD021KM.A2013218.1935.061.201804720133_cloudsat.nc)
+#dataDIR = '/gws/nopw/j04/eo_shared_data_vol2/scratch/dwatsonparris/MYD021KM.*_cloudsat.nc'
+
 filelist = glob(dataDIR)
 print(len(filelist))
 print(filelist)
@@ -35,6 +42,7 @@ def striped_boundary_data(mask, stripe_width, no_stripes, data, method='Mean'):
     outer_mask = np.zeros((mask.shape[0],mask.shape[1]))
     #Create the inner stripes
     for i in range(int(math.floor(no_stripes/2))):
+        print("inner", i)
         inner_mask = cv2.erode(inner_mask.astype('float32'), kernel, iterations = 1)
         masks[math.floor(no_stripes/2-1)-i,...] = mask.astype('float32')-inner_mask-outer_mask
         outer_mask = outer_mask + masks[math.floor(no_stripes/2-1)-i,...]
@@ -42,6 +50,7 @@ def striped_boundary_data(mask, stripe_width, no_stripes, data, method='Mean'):
     outer_mask = mask.astype('float32')
     inner_mask = mask.astype('float32')
     for i in range(int(math.ceil(no_stripes/2))):
+        print("outer", i)
         outer_mask = cv2.dilate(outer_mask, kernel, iterations = 1)
         masks[math.floor(no_stripes/2)+i,...] = outer_mask - inner_mask
         inner_mask = outer_mask
@@ -74,10 +83,25 @@ def data_extract(file):
     #if DS['poc_mask'].values.any() == 0:
     #    return None
     data = {}
-    #data comes in as one long vector, reshape to modis image size, first dimension is image index
-    shape = (int(DS.poc_mask.shape[0]/(2030*1350)),2030,1350)
-
     #extract numpy arrays into dict
+
+    #data comes in as one long vector, reshape to modis image size, first dimension is image index
+    # The tiles come in wierd shames though...
+    if DS.poc_mask.shape[0] % (2030*1354) == 0:
+        shape = (int(DS.poc_mask.shape[0]/(2030*1354)),2030,1354)
+    elif DS.poc_mask.shape[0] % (2030*1350) == 0:
+        shape = (int(DS.poc_mask.shape[0]/(2030*1350)),2030,1350)
+    elif DS.poc_mask.shape[0] % (2040*1354) == 0:
+        shape = (int(DS.poc_mask.shape[0]/(2040*1354)),2040,1354)
+    elif DS.poc_mask.shape[0] % (2040*1350) == 0:
+        shape = (int(DS.poc_mask.shape[0]/(2040*1350)),2040,1350)
+    else:
+        print("Weird shape modis data: {}".format(DS.poc_mask.shape[0]))
+        print(file)
+        print(DS)
+        return None
+
+
     for variable in DS:
         if variable == 'time':
             continue
@@ -85,6 +109,7 @@ def data_extract(file):
             data[variable] = DS[variable].values.reshape(shape)
         except:
             print('Something went wrong in the reshaping!')
+            print(file)
             return None
 
     #Discard images with no pocs

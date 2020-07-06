@@ -6,9 +6,10 @@ import math
 import copy
 import os
 
-num_procs = 12
+num_procs = 8
 num_loaded = 30
-dataDIR = 'Archive/*hdf_poc_5km.nc'
+#dataDIR = 'Archive/*hdf_poc_5km.nc'
+dataDIR = '/gws/nopw/j04/eo_shared_data_vol2/scratch/modis_hdf_processed/*hdf_poc_5km.nc'
 filelist = glob(dataDIR)
 print(len(filelist))
 
@@ -17,7 +18,7 @@ def datagen(n, filelist):
         yield filelist[i*n:(i+1)*n]
 
 def density(file):
-    d = cis.read_data(file, 'poc_mask')
+    d = cis.read_data(file, 'poc_mask', 'cis')
     binned = d.aggregate(longitude=[-180,180,1], latitude=[-90,90,1])
     binned.append(d.aggregate(longitude=[-180,180,1], latitude=[-90,90,1], how='sum'))
     for info in binned:
@@ -25,9 +26,10 @@ def density(file):
     density = make_from_cube(binned[3]/binned[2])
     count = binned[2]
     sums = binned[3]
-    density.save_data('./density_data/'+file[0][-38:-16]+'_density_5km.nc')
-    count.save_data('./density_data/'+file[0][-38:-16]+'_count_5km.nc')
-    sums.save_data('./densiy_data/'+file[0][-38:-16]+'_sum_5km.nc')
+    outname = './density_data/'+os.path.basename(file[0])
+    density.save_data(outname+'_density_5km.nc')
+    count.save_data(outname+'_count_5km.nc')
+    sums.save_data(outname+'_sum_5km.nc')
     return None
 
 if __name__ == '__main__':
