@@ -1,0 +1,10 @@
+# Dat afiles
+*.hdf
+*.nc
+*.np*
+*.txt
+*.pickle
+
+# Images
+*.png
+
