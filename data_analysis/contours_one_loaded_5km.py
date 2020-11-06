@@ -11,9 +11,10 @@ from glob import glob
 import itertools
 import os
 
-fileload = 10
-num_procs = 12
-dataDIR = 'Archive/*hdf_poc_5km.nc'
+fileload = 1
+num_procs = 8
+#dataDIR = 'Archive/*hdf_poc_5km.nc'
+dataDIR = '/gws/nopw/j04/eo_shared_data_vol2/scratch/modis_hdf_processed/*hdf_poc_5km.nc'
 filelist = glob(dataDIR)
 print(len(filelist))
 print(filelist)
@@ -74,7 +75,17 @@ def data_extract(file):
     #    return None
     data = {}
     #data comes in as one long vector, reshape to modis image size, first dimension is image index
-    shape = (int(DS.poc_mask.shape[0]/(406*270)),406,270)
+    #shape = (int(DS.poc_mask.shape[0]/(406*270)),406,270)
+    #print(DS.poc_mask.shape[0], shape)
+    if DS.poc_mask.shape[0] % (406*270) == 0:
+        shape = (int(DS.poc_mask.shape[0]/(406*270)),406,270)
+    elif DS.poc_mask.shape[0] % (408*270) == 0:
+        shape = (int(DS.poc_mask.shape[0]/(408*270)),408,270)
+    else:
+        print("Weird shape modis data: {}".format(DS.poc_mask.shape[0]))
+        print(file)
+        print(DS)
+        return None
 
     #extract numpy arrays into dict
     for variable in DS:

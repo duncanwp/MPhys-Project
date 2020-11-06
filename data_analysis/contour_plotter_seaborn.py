@@ -17,9 +17,11 @@ import os
 
 matplotlib.rcParams.update({'font.size': 16})
 
-with open('results/results_1km.pickle', 'rb') as handle:
+with open('/gws/nopw/j04/impala/users/dwatsonparris/POC_analysis/results/results_1km.pickle', 'rb') as handle:
     data = pickle.load(handle)
-    
+
+#print(data[1]['latitude'])
+
 pixel_size=1 # 1 for 1km, 5 for 5km
 stripe_width=15 # No. of stripes
     
@@ -27,10 +29,10 @@ lon = {'cal':[-155,-95], 'per':[-115,-55], 'nam':[-25,35]}
 lat = {'cal':[5,55], 'per':[-45,5], 'nam':[-45,15]}
 name_convert = {'Peru':'per', 'California':'cal', 'Namibia':'nam'}
 
-length = len(data[0]['latitude'][0])
+length = len(data[6]['latitude'][0])
 
 pandas_data = {}
-for key, value in data[0].items():
+for key, value in data[6].items():
     pandas_data[key] = np.zeros((0,length))
 
 for image in data:
@@ -77,7 +79,7 @@ for variable in to_plot_1km:
     index += 1
     
     
-with open('results/results_5km.pickle', 'rb') as handle:
+with open('/gws/nopw/j04/impala/users/dwatsonparris/POC_analysis/results/results_5km.pickle', 'rb') as handle:
     data = pickle.load(handle)
     
 pixel_size=5
@@ -87,10 +89,10 @@ lon = {'cal':[-155,-95], 'per':[-115,-55], 'nam':[-25,35]}
 lat = {'cal':[5,55], 'per':[-45,5], 'nam':[-45,15]}
 name_convert = {'Peru':'per', 'California':'cal', 'Namibia':'nam'}
 
-length = len(data[0]['latitude'][0])
+length = len(data[6]['latitude'][0])
 
 pandas_data = {}
-for key, value in data[0].items():
+for key, value in data[6].items():
     pandas_data[key] = np.zeros((0,length))
 
 for image in data:
